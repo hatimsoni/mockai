@@ -57,7 +57,7 @@ export function createSession(app: ReturnType<typeof createApp>, token: string, 
     .attach("resume", PDF, { filename: "cv.pdf", contentType: "application/pdf" });
 }
 
-export const AUDIO = Buffer.from("Eߣ fake webm");
+export const AUDIO = Buffer.concat([Buffer.from([0x1a, 0x45, 0xdf, 0xa3]), Buffer.from(" fake webm")]); // webm magic bytes
 
 export function answer(app: ReturnType<typeof createApp>, token: string, sessionId: string) {
   return request(app)
