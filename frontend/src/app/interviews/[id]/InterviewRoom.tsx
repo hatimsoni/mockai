@@ -151,7 +151,11 @@ export function InterviewRoom() {
                   Q{t.index + 1}. {t.question}
                 </p>
                 <p className="mt-2 text-sm text-slate-600">“{t.transcript || "(no speech detected)"}”</p>
-                {t.durationSec != null && <p className="mt-1 text-xs text-slate-400">{fmt(t.durationSec)}</p>}
+                <div className="mt-2 flex items-center gap-2 text-xs text-slate-400">
+                  {t.durationSec != null && <span>{fmt(t.durationSec)}</span>}
+                  {t.score != null && <Badge tone={t.score >= 4 ? "green" : t.score >= 3 ? "amber" : "rose"}>score {t.score.toFixed(1)}/5</Badge>}
+                  {t.evaluation?.improvements[0] && <span>Tip: {t.evaluation.improvements[0]}</span>}
+                </div>
               </Card>
             ))}
           </div>

@@ -24,6 +24,55 @@ export type TranscribeResult = {
   words: Word[];
   audio_key: string | null;
 };
+export type Evaluation = {
+  relevance: number;
+  depth: number;
+  clarity: number;
+  star: number;
+  overall: number;
+  star_breakdown: Record<"situation" | "task" | "action" | "result", boolean>;
+  strengths: string[];
+  improvements: string[];
+  needs_follow_up: boolean;
+  follow_up_reason: string;
+  fallback: boolean;
+};
+export type NextQuestion = {
+  question: string;
+  kind: "main" | "followup";
+  topic: string | null;
+  sources: Source[];
+};
+export type TurnPayload = {
+  index: number;
+  question: string;
+  kind: string;
+  topic: string | null;
+  transcript: string | null;
+  duration_sec: number | null;
+  evaluation: unknown;
+  nlp: unknown;
+  attention: unknown;
+};
+export type StepRequest = {
+  session_id: string;
+  job_title: string;
+  plan: PlannedQuestion[];
+  turns: TurnPayload[];
+  finish?: boolean;
+  max_followups?: number;
+};
+export type Report = {
+  scores: { overall: number | null; [k: string]: unknown };
+  coach: { summary: string; top_strengths: string[]; top_improvements: string[]; practice_plan: string[] };
+  fallback: boolean;
+};
+export type StepResult = {
+  evaluation: Evaluation | null;
+  next_question: NextQuestion | null;
+  done: boolean;
+  report: Report | null;
+};
 export type UploadedFile = { buffer: Buffer; filename: string; mimetype: string };
 
 export interface AiClient {
@@ -39,6 +88,8 @@ export interface AiClient {
     file: UploadedFile;
     keywords?: string[];
   }): Promise<TranscribeResult>;
+  /** One run of the LangGraph agent graph (evaluate -> next question, or -> report). */
+  step(req: StepRequest): Promise<StepResult>;
 }
 
 export function httpAiClient(baseUrl = config.aiServiceUrl): AiClient {
@@ -101,6 +152,9 @@ export function httpAiClient(baseUrl = config.aiServiceUrl): AiClient {
       form.set("keywords", JSON.stringify(keywords));
       form.set("audio", toBlob(file), file.filename);
       return call("/asr/transcribe", { method: "POST", body: form });
+    },
+    step(req) {
+      return postJson("/interview/step", req);
     },
   };
 }

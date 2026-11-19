@@ -48,3 +48,18 @@ Browser ──► frontend :3000 ──(fetch, JWT)──► api :4000 ──(HT
 - frontend: `useRecorder` hook (getUserMedia + MediaRecorder, webm/opus), question read aloud
   with the browser's free speechSynthesis, timer, upload, transcript display, progress.
 - tests: pytest for transcript/word mapping with a fake Whisper; vitest for answer flow.
+
+## Phase 3 — LangGraph agents (Interviewer, Evaluator, Coach) + report page
+- ai `app/agents/`: shared `InterviewState`; **Evaluator** scores the latest answer (relevance,
+  depth, clarity, STAR 1-5 + STAR breakdown, strengths, improvements, needs_follow_up) as strict
+  Pydantic JSON with retries, heuristic fallback; overall = weighted mean computed in code.
+  **Interviewer** decides: follow-up (LLM writes it, grounded in retrieved resume chunks) or next
+  planned question, max 2 follow-ups per interview, one per topic. **Coach** writes the final
+  report from all evaluations; numeric aggregates computed in code.
+- Graph: START → (unevaluated answer? evaluator) → (finish? coach : interviewer) → END.
+  Endpoint `POST /interview/step` (stateless: API sends plan + turns).
+- api: answer route calls `ai.step` → saves evaluation/score, creates follow-up or next turn;
+  finish route calls `ai.step(finish)` → saves report + overallScore.
+- frontend: report page (overall score, category bars, per-question feedback, coach advice).
+- tests: graph routing, evaluator retry/fallback, follow-up limits, coach aggregation (fake LLM);
+  vitest for follow-up turn creation + report saving.

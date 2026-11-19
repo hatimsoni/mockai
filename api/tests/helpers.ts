@@ -1,7 +1,21 @@
 import request from "supertest";
 import { vi } from "vitest";
 import { createApp } from "../src/app.js";
-import type { AiClient } from "../src/lib/aiClient.js";
+import type { AiClient, Evaluation, StepRequest, StepResult } from "../src/lib/aiClient.js";
+
+export const EVAL: Evaluation = {
+  relevance: 4,
+  depth: 3,
+  clarity: 4,
+  star: 3,
+  overall: 3.5,
+  star_breakdown: { situation: true, task: true, action: true, result: false },
+  strengths: ["clear"],
+  improvements: ["add a metric"],
+  needs_follow_up: false,
+  follow_up_reason: "",
+  fallback: false,
+};
 import { memoryRepo } from "../src/repo/memoryRepo.js";
 
 export const PDF = Buffer.from("%PDF-1.4 fake pdf bytes");
@@ -31,6 +45,29 @@ export function fakeAi(overrides: Partial<AiClient> = {}): AiClient {
       words: [{ word: "Um,", start: 0, end: 0.3, probability: 0.9 }],
       audio_key: `audio/x/${turnIndex}.webm`,
     })),
+    // Mimics the agent graph: fixed evaluation, next planned question, coach report on finish.
+    step: vi.fn(async (req: StepRequest): Promise<StepResult> => {
+      if (req.finish) {
+        return {
+          evaluation: null,
+          next_question: null,
+          done: true,
+          report: {
+            scores: { overall: 3.5 },
+            coach: { summary: "Solid.", top_strengths: ["a"], top_improvements: ["b"], practice_plan: ["c"] },
+            fallback: false,
+          },
+        };
+      }
+      const mainAsked = req.turns.filter((t) => t.kind === "main").length;
+      const item = req.plan[mainAsked];
+      return {
+        evaluation: { ...EVAL },
+        next_question: item ? { question: item.question, kind: "main", topic: item.topic, sources: item.sources } : null,
+        done: !item,
+        report: null,
+      };
+    }),
     ...overrides,
   } as AiClient;
 }

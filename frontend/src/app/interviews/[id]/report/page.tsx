@@ -1,4 +1,11 @@
-// Placeholder until phase 3 adds the Coach agent report.
+import { Suspense } from "react";
+import { Spinner } from "@/components/ui";
+import { ReportView } from "./ReportView";
+
 export default function ReportPage() {
-  return <p className="text-slate-500">Interview finished. The feedback report arrives in phase 3.</p>;
+  return (
+    <Suspense fallback={<Spinner label="Loading report…" />}>
+      <ReportView />
+    </Suspense>
+  );
 }

@@ -31,3 +31,13 @@ One line each: what, and why.
 - **Browser speechSynthesis reads questions aloud** — free, no server TTS model needed.
 - **Audio recorded as webm/opus via MediaRecorder** — native in Chrome/Edge/Firefox, ~10× smaller than WAV; PyAV decodes it server-side.
 - **Next question taken from the RAG plan in phase 2** — the agent graph replaces this in phase 3.
+
+## Phase 3 — agents
+- **LangGraph state graph with 3 nodes and conditional edges** — explicit, testable control flow; each agent has one small prompt (more reliable on a 7B model).
+- **One graph run per HTTP request, state sent by the API** — no LangGraph checkpointer/DB needed; AI service stays stateless.
+- **Overall score = weighted mean computed in Python (relevance .3, depth .3, clarity .2, STAR .2)** — LLMs are bad at arithmetic; formula stays transparent.
+- **Interviewer only calls the LLM for follow-ups** — next planned question needs no LLM; keeps CPU latency down.
+- **Max 2 follow-ups, never a follow-up of a follow-up, none after a fallback score** — bounded interview length.
+- **Coach gets computed numbers and only writes prose** — no hallucinated statistics.
+- **Fallbacks everywhere (heuristic evaluation, template follow-up, evaluator-highlight report), flagged in the data** — the interview never dead-ends if Ollama is slow/down; UI marks approximate scores.
+- **If the agent step fails, the transcript is rolled back** — the user can just answer again.
