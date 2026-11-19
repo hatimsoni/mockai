@@ -59,3 +59,16 @@ The committed models are trained on a template-generated seed set (synthetic). F
    for the AI service (in `infra/.env` for Docker; when Ollama runs in Docker, copy the files into the
    container first: `docker compose cp . ollama:/tmp/scorer` and run `ollama create` via `docker compose exec`).
 Verified before Colab: `ai/.venv/Scripts/python ml/finetune/run_local_smoke.py` runs every non-Colab cell on CPU.
+
+## 6. Run on local Kubernetes (optional, for the portfolio)
+Needs kind (https://kind.sigs.k8s.io) + kubectl and Docker with ≥ 10 GB RAM. Full steps: `infra/k8s/README.md`.
+Short version: `kind create cluster --name mockai --config infra/k8s/kind-config.yaml` → build the 3 images →
+`kind load docker-image ...` → copy/edit `secret.example.yaml` → `kubectl apply -f base.yaml -f secret.yaml` →
+`kubectl apply -k infra/k8s` → http://localhost:3000. Not executed on the build machine (no Docker/kind);
+the manifests are validated in CI (kubeconform + kind server-side dry run).
+
+## 7. Portfolio polish
+1. Record a demo GIF (upload → spoken answer → report → dashboard), save as `docs/media/demo.gif`.
+2. Take three screenshots into `docs/media/` (`interview.png`, `report.png`, `dashboard.png`); the README links them.
+3. After the Colab run, paste the LoRA rows from `ml/results/RESULTS.md` into the README results table.
+4. Check the GitHub Actions tab: all 5 CI jobs should be green.

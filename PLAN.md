@@ -130,3 +130,14 @@ Browser ──► frontend :3000 ──(fetch, JWT)──► api :4000 ──(HT
 - api `GET /dashboard`: caller's sessions (scored turns only) → AI; empty history short-circuits.
 - frontend `/dashboard`: KPI tiles, recharts line charts (one y-axis each, legend + direct labels for
   multi-series, tooltips), horizontal bars for topics/fillers, table view toggle, recommendations.
+
+## Phase 9 — Kubernetes, final CI/CD, deployment docs, recruiter README
+- `infra/k8s/` (kustomize): namespace, ConfigMap, Secret template (real secret never committed),
+  Postgres StatefulSet + headless Service, MinIO + bucket Job, Ollama + model-pull Job, ai / api /
+  frontend Deployments with probes and resource requests/limits, Services (frontend NodePort for
+  kind), `kind-config.yaml`, step-by-step README (build → `kind load` → apply).
+- CI: `k8s` job — render with `kubectl kustomize`, schema-validate with kubeconform, then create a
+  kind cluster and `kubectl apply --dry-run=server` (real API-server validation, no images needed).
+- Docs: `docs/ARCHITECTURE.md` (Mermaid), `docs/SETUP.md`, `docs/DEPLOYMENT.md` (free options with
+  honest limits), README for recruiters (problem, demo GIF placeholder, diagram, results table,
+  screenshots section, what I learned), `docs/learn/phase-9.md`.

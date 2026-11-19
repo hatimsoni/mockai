@@ -1,0 +1,195 @@
+# Stateful backing services: Postgres, MinIO (S3), Ollama (LLM).
+# kind/minikube ship a default StorageClass, so PVCs are provisioned automatically.
+
+# ---------- Postgres: StatefulSet = stable identity + its own disk ----------
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: mockai
+spec:
+  clusterIP: None # headless: DNS points straight at the pod
+  selector: { app: postgres }
+  ports: [{ port: 5432, name: pg }]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: mockai
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels: { app: postgres }
+  template:
+    metadata:
+      labels: { app: postgres }
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports: [{ containerPort: 5432 }]
+          env:
+            - { name: POSTGRES_USER, value: mockai }
+            - { name: POSTGRES_DB, value: mockai }
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: mockai-secrets, key: POSTGRES_PASSWORD } }
+            - { name: PGDATA, value: /var/lib/postgresql/data/pgdata }
+          readinessProbe:
+            exec: { command: ["pg_isready", "-U", "mockai"] }
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { memory: 512Mi }
+          volumeMounts: [{ name: data, mountPath: /var/lib/postgresql/data }]
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: { requests: { storage: 2Gi } }
+---
+# ---------- MinIO: S3-compatible object storage ----------
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-data
+  namespace: mockai
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: { requests: { storage: 5Gi } }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: mockai
+spec:
+  replicas: 1
+  strategy: { type: Recreate } # RWO volume: never two pods at once
+  selector:
+    matchLabels: { app: minio }
+  template:
+    metadata:
+      labels: { app: minio }
+    spec:
+      containers:
+        - name: minio
+          image: minio/minio:latest
+          args: ["server", "/data", "--console-address", ":9001"]
+          ports: [{ containerPort: 9000 }, { containerPort: 9001 }]
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom: { secretKeyRef: { name: mockai-secrets, key: S3_ACCESS_KEY } }
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom: { secretKeyRef: { name: mockai-secrets, key: S3_SECRET_KEY } }
+          readinessProbe:
+            httpGet: { path: /minio/health/ready, port: 9000 }
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 50m, memory: 256Mi }
+            limits: { memory: 512Mi }
+          volumeMounts: [{ name: data, mountPath: /data }]
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: minio-data }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: mockai
+spec:
+  selector: { app: minio }
+  ports:
+    - { name: s3, port: 9000 }
+    - { name: console, port: 9001 }
+---
+# One-shot Job: create the bucket (idempotent, retried until MinIO is ready).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-create-bucket
+  namespace: mockai
+spec:
+  backoffLimit: 10
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: mc
+          image: minio/mc:latest
+          command: ["sh", "-c"]
+          args:
+            - mc alias set local http://minio:9000 "$S3_ACCESS_KEY" "$S3_SECRET_KEY" && mc mb --ignore-existing local/mockai
+          envFrom: [{ secretRef: { name: mockai-secrets } }]
+---
+# ---------- Ollama: local LLM server ----------
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-models
+  namespace: mockai
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: { requests: { storage: 10Gi } } # qwen2.5:7b ≈ 4.7 GB
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: mockai
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector:
+    matchLabels: { app: ollama }
+  template:
+    metadata:
+      labels: { app: ollama }
+    spec:
+      containers:
+        - name: ollama
+          image: ollama/ollama:latest
+          ports: [{ containerPort: 11434 }]
+          env: [{ name: OLLAMA_KEEP_ALIVE, value: 30m }]
+          readinessProbe:
+            httpGet: { path: /, port: 11434 }
+            periodSeconds: 10
+          resources:
+            requests: { cpu: "1", memory: 5Gi } # 7B q4 model needs ~5 GB RAM
+            limits: { memory: 7Gi }
+          volumeMounts: [{ name: models, mountPath: /root/.ollama }]
+      volumes:
+        - name: models
+          persistentVolumeClaim: { claimName: ollama-models }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  namespace: mockai
+spec:
+  selector: { app: ollama }
+  ports: [{ port: 11434 }]
+---
+# One-shot Job: download the model into Ollama's volume through its HTTP API.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ollama-pull-model
+  namespace: mockai
+spec:
+  backoffLimit: 20
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: pull
+          image: curlimages/curl:latest
+          command: ["sh", "-c"]
+          args:
+            - curl -sf --max-time 3600 http://ollama:11434/api/pull -d "{\"name\":\"$LLM_MODEL\",\"stream\":false}"
+          env:
+            - name: LLM_MODEL
+              valueFrom: { configMapKeyRef: { name: mockai-config, key: LLM_MODEL } }

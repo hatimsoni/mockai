@@ -33,3 +33,5 @@ ml/finetune/outputs/
 .pip-install.log
 .DS_Store
 Thumbs.db
+infra/k8s/secret.yaml
+.tf-install.log

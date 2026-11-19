@@ -89,3 +89,14 @@ One line each: what, and why.
 - **recharts, one y-axis per chart, fixed validated palette order, legend + direct labels, tooltips, table toggle** — honest, accessible charts; no dual axes.
 - **Rule-based recommendations from aggregates** — deterministic and explainable; the Coach agent already gives per-interview LLM advice.
 - **Charts loaded with `next/dynamic` (`ssr: false`)** — recharts measures the DOM.
+
+## Phase 9 — Kubernetes, CI/CD, docs
+- **Plain YAML + kustomize (no Helm)** — fewer concepts to learn; kustomize ships with kubectl.
+- **Postgres as StatefulSet; MinIO/Ollama/ai as single-replica Deployments with `Recreate` + RWO PVCs** — honest about what is stateful.
+- **api and frontend run 2 replicas** — stateless; shows horizontal scaling. Prisma's migration advisory lock makes concurrent `migrate deploy` safe.
+- **Bucket creation and model download as Jobs** — idempotent one-shot tasks with retries.
+- **Secret template only; real secret applied out-of-band and git-ignored** — no secrets in git, even base64.
+- **Images loaded with `kind load` (`:local`, `IfNotPresent`)** — no registry account needed.
+- **CI validates manifests with kubeconform + kind `--dry-run=server`** — real admission checks without pulling multi-GB images.
+- **Whisper weights cache is ephemeral in k8s** (HF_HOME holds the baked MiniLM model) — re-downloads ~480 MB after a pod restart; acceptable for local demos.
+- **Free deployment documented, not automated** — every option needs an account and has sleep/RAM/rate limits; local stays the primary target.
