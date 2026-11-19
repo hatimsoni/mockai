@@ -1,4 +1,4 @@
-# PLAN
+con# PLAN
 
 Short plan written before each phase. Newest phase at the bottom.
 
@@ -107,3 +107,17 @@ Browser ──► frontend :3000 ──(fetch, JWT)──► api :4000 ──(HT
 - ai: `/ml/quality` serves the sklearn pipeline (expected score from class probabilities);
   evaluator heuristic fallback uses it when the LLM is down. API stores `turn.baselineScore`.
 - tests: pytest for seed generator determinism, metrics helpers, `/ml/quality` with a tiny model.
+
+## Phase 7 — LoRA fine-tuning (Colab T4) + evaluation comparison
+- Shared scoring prompt in `ai/app/scoring_prompt.py`; the notebook embeds the same text (a test
+  checks the notebook contains it → no prompt skew between training and serving).
+- `ml/finetune/lora_qwen_scoring.ipynb`: load `ml/data/{train,val,test}.csv` (git clone or
+  upload), Qwen2.5-0.5B-Instruct fp16, score = argmax/expected value over the logits of tokens
+  "1".."5" (no free-text parsing), zero-shot base eval → LoRA (r=16, all linear proj, completion-only
+  loss, 3 epochs, ~5-10 min on T4) → eval on the same test set → table vs sklearn/Keras →
+  `lora_metrics.json`; export adapter, merged model, GGUF (llama.cpp) + Ollama `Modelfile`.
+  `SMOKE_TEST` mode (auto when no GPU) runs a tiny subset on CPU — used to verify the notebook locally.
+- `ml/finetune/build_notebook.py` generates the .ipynb from readable Python cell sources.
+- ai: optional `SCORER_MODEL` (e.g. Ollama `mockai-scorer`) → `/ml/quality` also returns
+  `finetuned_score` using the shared prompt.
+- MANUAL_STEPS: run in Colab, copy `lora_metrics.json`, `ollama create`.

@@ -45,7 +45,7 @@ def test_quality_endpoint_without_model(monkeypatch, tmp_path):
     _use_models_dir(monkeypatch, tmp_path)
     res = client.post("/ml/quality", json={"question": "Q", "answer": "hello there"}).json()
     quality.reset()
-    assert res == {"available": False, "score": None, "label": None, "probabilities": None}
+    assert res == {"available": False, "score": None, "label": None, "probabilities": None, "finetuned_score": None}
 
 
 def test_evaluator_fallback_uses_baseline(monkeypatch, tmp_path):

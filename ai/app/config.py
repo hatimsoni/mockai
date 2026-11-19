@@ -43,6 +43,8 @@ class Settings(BaseSettings):
 
     # --- trained models ---
     models_dir: str = str(AI_ROOT / "models")
+    # Ollama model created from the LoRA notebook export (e.g. "mockai-scorer"). Empty = off.
+    scorer_model: str = ""
 
     # --- service-to-service auth (API -> AI). Empty = disabled (local dev). ---
     internal_api_key: str = ""

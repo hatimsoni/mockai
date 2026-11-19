@@ -72,3 +72,13 @@ One line each: what, and why.
 - **scikit-learn pinned to 1.9.\*** — pickled pipelines are version-sensitive.
 - **Baseline used as the Evaluator's fallback** — better than length-only scoring when the LLM is down.
 - **`tensorflow-cpu` only in `ml/requirements.txt`** — keeps the AI image ~500 MB lighter.
+
+## Phase 7 — fine-tuning
+- **Qwen2.5-0.5B-Instruct + LoRA r=16 on all linear projections, fp16 + GradScaler, 3 epochs** — fits a free T4 and trains in minutes; 0.5B serves on CPU.
+- **Hand-written training loop instead of `Trainer`/TRL** — fewer moving parts across library versions, every step visible for study.
+- **Score from next-token logits of "1".."5"** — always valid output, deterministic, gives an expected score.
+- **Completion-only loss** — learn the score, not the prompt.
+- **Notebook generated from `build_notebook.py`; prompt cell generated from `ai/app/scoring_prompt.py`, test-enforced** — reviewable diffs and no prompt skew.
+- **CPU smoke run of the notebook (`run_local_smoke.py`)** — first Colab run shouldn't be the first execution.
+- **Export GGUF q8_0 + Modelfile with explicit ChatML template; serve via Ollama (`SCORER_MODEL`)** — no transformers/torch-GPU in the AI image.
+- **Ruff skips `*.ipynb`** — generated, compact notebook style.

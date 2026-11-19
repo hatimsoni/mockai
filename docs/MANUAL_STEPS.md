@@ -47,3 +47,15 @@ The committed models are trained on a template-generated seed set (synthetic). F
    ai/.venv/Scripts/python ml/results/compare.py
    ```
 5. Restart the AI service so it loads the new `ai/models/quality_baseline.joblib`.
+
+## 5. Run the LoRA fine-tuning notebook in Colab (free T4, ~20 min)
+1. Push the repo to GitHub (public), or keep `ml/data/{train,val,test}.csv` ready to upload.
+2. Open https://colab.research.google.com → File → Upload notebook → `ml/finetune/lora_qwen_scoring.ipynb`.
+3. Runtime → Change runtime type → **T4 GPU**. If you forked the repo, edit `REPO_URL` in cell 3.
+4. Runtime → Run all. (A Google account is required; Colab free tier is enough.)
+5. The last cell downloads `mockai-scorer.zip` (GGUF + Modelfile + metrics + adapter).
+6. Locally: copy `lora_metrics.json` to `ml/results/`, then `ai/.venv/Scripts/python ml/results/compare.py`.
+7. Optional, run it in the app: unzip, `ollama create mockai-scorer -f Modelfile`, set `SCORER_MODEL=mockai-scorer`
+   for the AI service (in `infra/.env` for Docker; when Ollama runs in Docker, copy the files into the
+   container first: `docker compose cp . ollama:/tmp/scorer` and run `ollama create` via `docker compose exec`).
+Verified before Colab: `ai/.venv/Scripts/python ml/finetune/run_local_smoke.py` runs every non-Colab cell on CPU.

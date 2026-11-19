@@ -34,7 +34,8 @@ def set_llm_override(llm: BaseChatModel | None) -> None:
     _llm_override = llm
 
 
-def get_llm(json_mode: bool = False):
+def get_llm(json_mode: bool = False, model: str | None = None, **kwargs):
+    """Chat model client. `model` overrides LLM_MODEL (e.g. the fine-tuned scorer)."""
     if _llm_override is not None:
         return _llm_override
     from langchain_openai import ChatOpenAI  # imported lazily: keeps startup fast
@@ -43,10 +44,11 @@ def get_llm(json_mode: bool = False):
     llm = ChatOpenAI(
         base_url=s.llm_base_url,
         api_key=s.llm_api_key,
-        model=s.llm_model,
-        temperature=s.llm_temperature,
+        model=model or s.llm_model,
+        temperature=kwargs.pop("temperature", s.llm_temperature),
         timeout=s.llm_timeout_seconds,
         max_retries=1,
+        **kwargs,
     )
     # JSON mode constrains decoding so the model can only emit valid JSON tokens.
     return llm.bind(response_format={"type": "json_object"}) if json_mode else llm
