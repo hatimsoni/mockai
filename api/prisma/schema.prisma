@@ -1,0 +1,73 @@
+// Data model for the API (owned by the Node service; the AI service is stateless).
+// Generate client:  npx prisma generate
+// Apply migrations: npx prisma migrate deploy
+
+generator client {
+  provider      = "prisma-client-js"
+  // "native" for your laptop, musl for the node:20-alpine Docker image
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String             @id @default(cuid())
+  email        String             @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime           @default(now())
+  sessions     InterviewSession[]
+}
+
+enum SessionStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+// One mock interview.
+model InterviewSession {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobTitle       String
+  jdText         String        @db.Text
+  resumeFileName String
+  resumeKey      String? // object key in MinIO/S3
+  status         SessionStatus @default(IN_PROGRESS)
+  maxQuestions   Int
+  report         Json? // Coach agent output
+  overallScore   Float?
+  createdAt      DateTime      @default(now())
+  completedAt    DateTime?
+  turns          Turn[]
+
+  @@index([userId, createdAt])
+}
+
+// One question + the candidate's answer + all analysis of that answer.
+model Turn {
+  id            String           @id @default(cuid())
+  sessionId     String
+  session       InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  index         Int
+  question      String           @db.Text
+  kind          String           @default("main") // "main" | "followup"
+  topic         String?
+  sources       Json? // RAG chunks the question was grounded in
+  audioKey      String?
+  transcript    String?          @db.Text
+  durationSec   Float?
+  words         Json? // ASR word timestamps
+  nlp           Json? // filler words, WPM, keyword coverage...
+  attention     Json? // webcam attention summary
+  evaluation    Json? // Evaluator agent JSON
+  score         Float? // overall 1-5 from the Evaluator
+  baselineScore Float? // scikit-learn baseline prediction, for comparison
+  createdAt     DateTime         @default(now())
+  answeredAt    DateTime?
+
+  @@unique([sessionId, index])
+}

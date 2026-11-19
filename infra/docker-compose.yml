@@ -1,0 +1,98 @@
+# One command to run the whole stack:
+#   cp infra/.env.example infra/.env
+#   docker compose -f infra/docker-compose.yml up -d --build
+# Then pull the LLM once:
+#   docker compose -f infra/docker-compose.yml exec ollama ollama pull qwen2.5:7b-instruct
+name: mockai
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: mockai
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mockai}
+      POSTGRES_DB: mockai
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mockai"]
+      interval: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin}
+    ports: ["9000:9000", "9001:9001"]
+    volumes: [miniodata:/data]
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      retries: 10
+
+  # one-shot job: create the bucket, then exit
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio: { condition: service_healthy }
+    entrypoint: >
+      sh -c "mc alias set local http://minio:9000 $${S3_ACCESS_KEY:-minioadmin} $${S3_SECRET_KEY:-minioadmin}
+      && mc mb --ignore-existing local/mockai"
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+
+  ollama:
+    image: ollama/ollama:latest
+    ports: ["11434:11434"]
+    volumes: [ollama:/root/.ollama]
+    environment:
+      OLLAMA_KEEP_ALIVE: 30m   # keep the model in RAM between questions
+
+  ai:
+    build: ../ai
+    environment:
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://ollama:11434/v1}
+      LLM_API_KEY: ${LLM_API_KEY:-ollama}
+      LLM_MODEL: ${LLM_MODEL:-qwen2.5:7b-instruct}
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+      S3_BUCKET: mockai
+      CHROMA_DIR: /data/chroma
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
+      HF_HOME: /models-cache
+    volumes:
+      - aidata:/data          # Chroma vectors
+      - hfcache:/models-cache # whisper weights downloaded on first use
+    ports: ["8000:8000"]
+    depends_on: [ollama, minio-init]
+
+  api:
+    build: ../api
+    environment:
+      DATABASE_URL: postgresql://mockai:${POSTGRES_PASSWORD:-mockai}@postgres:5432/mockai?schema=public
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in infra/.env}
+      AI_SERVICE_URL: http://ai:8000
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
+      CORS_ORIGIN: http://localhost:3000
+    ports: ["4000:4000"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      ai: { condition: service_started }
+
+  frontend:
+    build: ../frontend
+    environment:
+      API_URL: http://api:4000
+    ports: ["3000:3000"]
+    depends_on: [api]
+
+volumes:
+  pgdata:
+  miniodata:
+  ollama:
+  aidata:
+  hfcache:

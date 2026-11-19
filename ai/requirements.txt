@@ -1,0 +1,37 @@
+# CPU-only PyTorch wheels (no CUDA download, ~200 MB instead of ~2 GB)
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# --- web service ---
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+pydantic>=2.7
+pydantic-settings>=2.3
+httpx>=0.27
+
+# --- documents + RAG (LangChain) ---
+pypdf>=4.2
+langchain-core>=0.3
+langchain-text-splitters>=0.3
+langchain-chroma>=0.1.4
+langchain-huggingface>=0.1
+langchain-openai>=0.2
+chromadb>=0.5
+sentence-transformers>=3.0
+
+# --- agents ---
+langgraph>=0.2
+
+# --- speech ---
+faster-whisper>=1.0
+
+# --- NLP / ML ---
+nltk>=3.9
+numpy>=1.26
+pandas>=2.2
+scikit-learn>=1.5
+joblib>=1.4
+torch>=2.3
+
+# --- object storage (MinIO / S3) ---
+boto3>=1.34

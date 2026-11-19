@@ -1,0 +1,35 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# node
+node_modules/
+.next/
+dist/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# local data / models (large or private)
+ai/data/
+ai/models/*.pt
+!ai/models/.gitkeep
+ml/data/raw/
+ml/vision/data/*.csv
+!ml/vision/data/sample_landmarks.csv
+ml/finetune/outputs/
+*.gguf
+
+# misc
+.pip-install.log
+.DS_Store
+Thumbs.db
