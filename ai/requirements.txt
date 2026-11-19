@@ -24,6 +24,8 @@ langgraph>=0.2
 
 # --- speech ---
 faster-whisper>=1.0
+# faster-whisper 1.2.x calls av.open(metadata_errors=...), removed in PyAV 17+
+av>=16,<17
 
 # --- NLP / ML ---
 nltk>=3.9

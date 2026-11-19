@@ -8,6 +8,10 @@
   bcrypt), repository layer, `POST/GET /sessions`; frontend auth pages, new-interview form,
   interview page with "why this question?" sources.
   Tests: ai 12 pytest, api 9 vitest. Real MiniLM + Chroma smoke-tested locally.
+- **Phase 2 — interview UI + ASR**: faster-whisper small/int8 with VAD, word timestamps and a
+  filler-preserving prompt (real smoke test: 9 s audio in 3.1 s, fillers kept); audio stored in
+  MinIO; API `POST /sessions/:id/answer` + `/finish`; browser recorder hook, TTS question
+  reading, interview state machine UI. Tests: ai 15, api 12.
 
 ## Pending
 - Phases 2â€“9.

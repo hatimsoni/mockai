@@ -7,6 +7,7 @@ import type { AiClient } from "./lib/aiClient.js";
 import { HttpError } from "./lib/httpError.js";
 import type { Repo } from "./repo/types.js";
 import { authRouter } from "./routes/auth.js";
+import { interviewRouter } from "./routes/interview.js";
 import { sessionsRouter } from "./routes/sessions.js";
 
 export type Deps = { repo: Repo; ai: AiClient };
@@ -24,6 +25,7 @@ export function createApp(deps: Deps) {
 
   app.use("/auth", authRouter(deps.repo));
   app.use("/sessions", sessionsRouter(deps.repo, deps.ai));
+  app.use("/sessions", interviewRouter(deps.repo, deps.ai));
 
   app.use((_req, _res, next) => next(new HttpError(404, "not found")));
 

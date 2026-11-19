@@ -36,3 +36,15 @@ Browser ──► frontend :3000 ──(fetch, JWT)──► api :4000 ──(HT
   with their source chunks.
 - tests: pytest (chunking, store retrieval with fake embeddings, invoke_json retry, plan
   endpoint with fake LLM), vitest (auth flow, session creation with fake AI).
+
+## Phase 2 — interview UI + audio recording + ASR
+- ai: `asr.py` — faster-whisper `small` int8 on CPU (lazy singleton, override hook for tests),
+  VAD filter, word timestamps, `initial_prompt` that (a) biases vocabulary toward JD terms and
+  (b) nudges Whisper to keep fillers ("um", "uh") which it normally deletes. Endpoint
+  `POST /asr/transcribe` (multipart) also stores audio in MinIO.
+- api: `POST /sessions/:id/answer` (multipart audio + durationSec) answers the current turn:
+  transcribe → save → create next turn from the plan (phase 3 swaps in the agent graph).
+  `POST /sessions/:id/finish`.
+- frontend: `useRecorder` hook (getUserMedia + MediaRecorder, webm/opus), question read aloud
+  with the browser's free speechSynthesis, timer, upload, transcript display, progress.
+- tests: pytest for transcript/word mapping with a fake Whisper; vitest for answer flow.

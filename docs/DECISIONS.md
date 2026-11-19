@@ -23,3 +23,11 @@ One line each: what, and why.
 - **Repository interface + in-memory implementation in the API** — route tests run without Postgres.
 - **JWT in localStorage** — simplest for an SPA-style demo; production would use httpOnly cookies to reduce XSS token theft (noted as a known trade-off).
 - **Session creation is synchronous (~1 min)** — simpler than a job queue; a queue (BullMQ/Redis) is the upgrade path.
+
+## Phase 2 — ASR
+- **faster-whisper `small` int8, greedy decoding (beam 1)** — ~3 s to transcribe 9 s of speech on a laptop CPU; beam 5 doubles the time for little gain on clear speech.
+- **Filler-word `initial_prompt`** — Whisper normally deletes "um/uh"; priming it with a disfluent prompt keeps them (verified locally: "Umm… and uh…" transcribed).
+- **Pinned `av>=16,<17`** — root cause of a crash: faster-whisper 1.2.1 passes `metadata_errors=` to `av.open`, which PyAV 17+ removed.
+- **Browser speechSynthesis reads questions aloud** — free, no server TTS model needed.
+- **Audio recorded as webm/opus via MediaRecorder** — native in Chrome/Edge/Firefox, ~10× smaller than WAV; PyAV decodes it server-side.
+- **Next question taken from the RAG plan in phase 2** — the agent graph replaces this in phase 3.

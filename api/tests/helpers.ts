@@ -24,6 +24,13 @@ export function fakeAi(overrides: Partial<AiClient> = {}): AiClient {
         sources: [{ id: "J1", source: "jd" as const, text: "REST APIs in Node.js" }],
       })),
     })),
+    transcribe: vi.fn(async ({ turnIndex }) => ({
+      text: `Um, my answer to question ${turnIndex + 1} is that I built APIs.`,
+      language: "en",
+      duration: 42,
+      words: [{ word: "Um,", start: 0, end: 0.3, probability: 0.9 }],
+      audio_key: `audio/x/${turnIndex}.webm`,
+    })),
     ...overrides,
   } as AiClient;
 }
@@ -48,4 +55,14 @@ export function createSession(app: ReturnType<typeof createApp>, token: string, 
     .field("jdText", JD)
     .field("numQuestions", String(numQuestions))
     .attach("resume", PDF, { filename: "cv.pdf", contentType: "application/pdf" });
+}
+
+export const AUDIO = Buffer.from("Eߣ fake webm");
+
+export function answer(app: ReturnType<typeof createApp>, token: string, sessionId: string) {
+  return request(app)
+    .post(`/sessions/${sessionId}/answer`)
+    .set("Authorization", `Bearer ${token}`)
+    .field("durationSec", "40")
+    .attach("audio", AUDIO, { filename: "answer.webm", contentType: "audio/webm" });
 }

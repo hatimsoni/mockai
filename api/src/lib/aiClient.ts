@@ -16,6 +16,14 @@ export type IngestResult = {
   resume_chars: number;
   chunks: Record<string, number>;
 };
+export type Word = { word: string; start: number; end: number; probability: number };
+export type TranscribeResult = {
+  text: string;
+  language: string;
+  duration: number;
+  words: Word[];
+  audio_key: string | null;
+};
 export type UploadedFile = { buffer: Buffer; filename: string; mimetype: string };
 
 export interface AiClient {
@@ -25,6 +33,12 @@ export interface AiClient {
     jobTitle: string;
     numQuestions: number;
   }): Promise<{ questions: PlannedQuestion[] }>;
+  transcribe(args: {
+    sessionId: string;
+    turnIndex: number;
+    file: UploadedFile;
+    keywords?: string[];
+  }): Promise<TranscribeResult>;
 }
 
 export function httpAiClient(baseUrl = config.aiServiceUrl): AiClient {
@@ -79,6 +93,14 @@ export function httpAiClient(baseUrl = config.aiServiceUrl): AiClient {
         job_title: jobTitle,
         num_questions: numQuestions,
       });
+    },
+    transcribe({ sessionId, turnIndex, file, keywords = [] }) {
+      const form = new FormData();
+      form.set("session_id", sessionId);
+      form.set("turn_index", String(turnIndex));
+      form.set("keywords", JSON.stringify(keywords));
+      form.set("audio", toBlob(file), file.filename);
+      return call("/asr/transcribe", { method: "POST", body: form });
     },
   };
 }
