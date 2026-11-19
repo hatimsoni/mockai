@@ -61,6 +61,7 @@ export function fakeAi(overrides: Partial<AiClient> = {}): AiClient {
       max_sentence_length: 12,
       lexical_diversity: 0.9,
     })),
+    progress: vi.fn(async (sessions: unknown[]) => ({ summary: { total_sessions: sessions.length }, timeline: [] })),
     quality: vi.fn(async () => ({ available: true, score: 3.2 })),
     predictAttention: vi.fn(async (frames: number[][]) => ({
       probabilities: frames.map(() => 0.9),

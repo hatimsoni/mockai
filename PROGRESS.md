@@ -37,10 +37,14 @@
   Modelfile export. Verified with `run_local_smoke.py` on CPU (tiny subset). Optional
   `SCORER_MODEL` → `/ml/quality` returns `finetuned_score`.
 
-Tests now: ai 50 + ml 5 (pytest), api 19 (vitest), frontend 5 (vitest).
+- **Phase 8 — dashboard**: `ai/app/analytics.py` (Pandas: per-session timeline + rolling mean,
+  criteria, weakest topics, filler totals, KPIs, recommendations) behind `/analytics/progress`;
+  API `GET /dashboard`; frontend `/dashboard` with recharts + table view.
+
+Tests now: ai 56 + ml 5 (pytest), api 22 (vitest), frontend 5 (vitest).
 
 ## Pending
-- Phases 8–9.
+- Phase 9.
 - Manual: record webcam data + train attention model (`docs/MANUAL_STEPS.md` §3).
 - Manual: generate + label real answers, retrain (`docs/MANUAL_STEPS.md` §4).
 - Manual: run the LoRA notebook on Colab T4, copy `lora_metrics.json` (`docs/MANUAL_STEPS.md` §5).
@@ -52,5 +56,6 @@ Tests now: ai 50 + ml 5 (pytest), api 19 (vitest), frontend 5 (vitest).
 - MediaPipe WASM/model load from public CDNs (needs internet in the browser).
 
 ## Next step
-Phase 8: dashboard — AI `/analytics/progress` (Pandas), API `GET /dashboard`, frontend
-`/dashboard` with recharts (in progress in the working tree).
+Phase 9: Kubernetes manifests (`infra/k8s/`, kustomize, kind config), final CI (k8s manifest
+validation), `docs/DEPLOYMENT.md` (free options, honest limits), `docs/ARCHITECTURE.md`,
+`docs/SETUP.md`, recruiter README, `docs/learn/phase-9.md`.

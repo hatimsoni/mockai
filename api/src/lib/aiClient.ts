@@ -110,6 +110,8 @@ export interface AiClient {
   predictAttention(frames: number[][]): Promise<{ probabilities: number[]; attentive: boolean[]; model: string }>;
   /** One run of the LangGraph agent graph (evaluate -> next question, or -> report). */
   step(req: StepRequest): Promise<StepResult>;
+  /** Pandas aggregation of a user's history for the dashboard. */
+  progress(sessions: unknown[]): Promise<Record<string, unknown>>;
 }
 
 export function httpAiClient(baseUrl = config.aiServiceUrl): AiClient {
@@ -184,6 +186,9 @@ export function httpAiClient(baseUrl = config.aiServiceUrl): AiClient {
     },
     step(req) {
       return postJson("/interview/step", req);
+    },
+    progress(sessions) {
+      return postJson("/analytics/progress", { sessions });
     },
   };
 }

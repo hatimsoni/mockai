@@ -82,3 +82,10 @@ One line each: what, and why.
 - **CPU smoke run of the notebook (`run_local_smoke.py`)** — first Colab run shouldn't be the first execution.
 - **Export GGUF q8_0 + Modelfile with explicit ChatML template; serve via Ollama (`SCORER_MODEL`)** — no transformers/torch-GPU in the AI image.
 - **Ruff skips `*.ipynb`** — generated, compact notebook style.
+
+## Phase 8 — dashboard
+- **Aggregation in the AI service with Pandas (API sends the user's history)** — metrics are JSON columns; Pandas flattens/aggregates them readably; keeps "analytics" in the Python service.
+- **Empty history short-circuits in the API** — no AI round-trip for new users.
+- **recharts, one y-axis per chart, fixed validated palette order, legend + direct labels, tooltips, table toggle** — honest, accessible charts; no dual axes.
+- **Rule-based recommendations from aggregates** — deterministic and explainable; the Coach agent already gives per-interview LLM advice.
+- **Charts loaded with `next/dynamic` (`ssr: false`)** — recharts measures the DOM.

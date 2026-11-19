@@ -121,3 +121,12 @@ Browser ──► frontend :3000 ──(fetch, JWT)──► api :4000 ──(HT
 - ai: optional `SCORER_MODEL` (e.g. Ollama `mockai-scorer`) → `/ml/quality` also returns
   `finetuned_score` using the shared prompt.
 - MANUAL_STEPS: run in Colab, copy `lora_metrics.json`, `ollama create`.
+
+## Phase 8 — progress dashboard
+- ai `app/analytics.py`: flatten sessions → one Pandas row per scored answer; per-session groupby
+  (overall, criteria, speech, attention) sorted by date + 3-session rolling mean; weakest topics;
+  filler totals; KPIs (latest, best, improvement, practice minutes); rule-based recommendations.
+  `POST /analytics/progress`.
+- api `GET /dashboard`: caller's sessions (scored turns only) → AI; empty history short-circuits.
+- frontend `/dashboard`: KPI tiles, recharts line charts (one y-axis each, legend + direct labels for
+  multi-series, tooltips), horizontal bars for topics/fillers, table view toggle, recommendations.
