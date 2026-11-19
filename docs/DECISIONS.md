@@ -49,3 +49,15 @@ One line each: what, and why.
 - **Per-answer coverage threshold 20% for "good"** — one answer can't cover a whole JD.
 - **Same keyword extractor biases Whisper** — `/asr/transcribe` takes `jd_text`.
 - **Removed apt ffmpeg from the AI image** — PyAV wheels bundle FFmpeg.
+
+## Phase 5 — vision
+- **MediaPipe FaceLandmarker in the browser, only 45 numbers sent** — privacy, bandwidth, no server GPU.
+- **15 key landmarks + 6 engineered features, nose-centred and eye-distance-scaled** — position/scale invariant, explainable.
+- **MLP 51→32→16→1 (~2.3k params)** — right-sized for a few thousand frames; trains in seconds on CPU.
+- **Rule-based heuristic until a model is trained** — cold start; synthetic-trained models are never shipped.
+- **Group split by recording + early stopping** — avoids leakage from near-duplicate consecutive frames.
+- **Test diffs the TS and Python landmark lists** — prevents train/serve skew.
+- **Browser `/vision-lab` recorder in addition to the Python script** — uses the exact production extractor.
+- **Batch 4 frames per request (every ~2 s)** — live feedback without flooding the API.
+- **Attention summary computed client-side per answer, validated by zod in the API** — simple; only aggregates stored.
+- **MediaPipe WASM + model loaded from public CDNs (jsdelivr, Google storage)** — free; offline use would need copying them into `frontend/public/`.

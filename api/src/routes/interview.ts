@@ -18,8 +18,35 @@ const audioUpload = multer({
       : cb(new HttpError(400, "answer must be an audio file")),
 });
 
+// Webcam attention summary computed in the browser for this answer (sent as a JSON string
+// inside the multipart form). Only aggregate numbers — never images.
+const attentionSummary = z.object({
+  samples: z.number().int().min(0),
+  attentive_ratio: z.number().min(0).max(1),
+  looking_away_events: z.number().int().min(0),
+  face_missing_ratio: z.number().min(0).max(1),
+  model: z.string().max(20).optional(),
+});
+
 const answerBody = z.object({
   durationSec: z.coerce.number().min(0).max(1800).optional(),
+  attention: z
+    .string()
+    .optional()
+    .transform((s, ctx) => {
+      if (!s) return null;
+      try {
+        return attentionSummary.parse(JSON.parse(s));
+      } catch {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "invalid attention summary" });
+        return z.NEVER;
+      }
+    }),
+});
+
+const framesBody = z.object({
+  // 15 landmarks x (x, y, z) = 45 numbers per frame, max 40 frames per call
+  frames: z.array(z.array(z.number().finite()).length(45)).min(1).max(40),
 });
 
 async function loadActive(repo: Repo, id: string, userId: string): Promise<SessionWithTurns> {
@@ -75,6 +102,7 @@ export function interviewRouter(repo: Repo, ai: AiClient) {
       durationSec,
       audioKey: asr.audio_key,
       nlp,
+      attention: body.attention,
       answeredAt: new Date(),
     });
 
@@ -111,6 +139,13 @@ export function interviewRouter(repo: Repo, ai: AiClient) {
       : null;
 
     res.json({ turn: answered, next, done: next === null });
+  });
+
+  /** Live attention: landmark frames from the browser -> PyTorch classifier in the AI service. */
+  r.post("/:id/attention", async (req, res) => {
+    const { frames } = framesBody.parse(req.body);
+    await loadActive(repo, req.params.id as string, currentUserId(res)); // authorization
+    res.json(await ai.predictAttention(frames));
   });
 
   /** End the interview (all questions answered, or the user stops early): Coach report. */

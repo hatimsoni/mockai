@@ -1,0 +1,15 @@
+# Training-side extras. Install into the AI venv (it already has torch, sklearn, pandas):
+#   ai/.venv/Scripts/pip install -r ml/requirements.txt
+-r ../ai/requirements.txt
+
+# vision data recording
+opencv-python>=4.9
+mediapipe>=0.10.14
+
+# classic ML comparison model (phase 6)
+tensorflow-cpu>=2.16; platform_system != "Darwin"
+tensorflow>=2.16; platform_system == "Darwin"
+
+# notebooks
+jupyter>=1.0
+matplotlib>=3.8

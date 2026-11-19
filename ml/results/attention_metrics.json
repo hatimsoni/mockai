@@ -1,0 +1,13 @@
+{
+  "accuracy": 0.9925,
+  "f1": 0.9925,
+  "n": 400,
+  "roc_auc": 0.9998,
+  "epochs": 98,
+  "train_frames": 1200,
+  "test_groups": [
+    "rec3",
+    "rec4"
+  ],
+  "synthetic": true
+}

@@ -3,7 +3,9 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SourceList } from "@/components/SourceList";
+import { WebcamPanel } from "@/components/WebcamPanel";
 import { Badge, Button, Card, ErrorText, Spinner } from "@/components/ui";
+import { useAttention } from "@/hooks/useAttention";
 import { useRecorder } from "@/hooks/useRecorder";
 import { useSpeech } from "@/hooks/useSpeech";
 import { api } from "@/lib/api";
@@ -22,8 +24,10 @@ export function InterviewRoom() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState<"" | "uploading" | "finishing">("");
   const [done, setDone] = useState(false);
+  const [camOn, setCamOn] = useState(true);
   const recorder = useRecorder();
   const speech = useSpeech();
+  const attention = useAttention(id, camOn && !!session && !done);
 
   useEffect(() => {
     if (!user) return;
@@ -43,9 +47,16 @@ export function InterviewRoom() {
   const current = session.turns.at(-1)!;
   const answered = session.turns.filter((t) => t.transcript !== null);
 
+  async function startAnswer() {
+    speech.cancel();
+    attention.reset(); // attention window = this answer only
+    await recorder.start();
+  }
+
   async function submitAnswer() {
     speech.cancel();
     const rec = await recorder.stop();
+    const attentionSummary = attention.summary();
     if (!rec) return;
     if (rec.durationSec < 2) {
       setError("That was under 2 seconds — try answering again.");
@@ -58,6 +69,7 @@ export function InterviewRoom() {
       const ext = rec.mimeType.includes("ogg") ? "ogg" : rec.mimeType.includes("mp4") ? "m4a" : "webm";
       form.set("audio", rec.blob, `answer.${ext}`);
       form.set("durationSec", String(rec.durationSec));
+      if (attentionSummary) form.set("attention", JSON.stringify(attentionSummary));
       const r = await api<AnswerResponse>(`/sessions/${id}/answer`, { method: "POST", body: form });
       setSession((s) =>
         s && {
@@ -112,7 +124,7 @@ export function InterviewRoom() {
             <div className="mt-6 flex flex-wrap items-center gap-3">
               {!recorder.recording && busy === "" && (
                 <>
-                  <Button onClick={recorder.start}>● Start answering</Button>
+                  <Button onClick={startAnswer}>● Start answering</Button>
                   {speech.supported && (
                     <Button variant="secondary" onClick={() => speech.speak(current.question)} disabled={speech.speaking}>
                       {speech.speaking ? "Speaking…" : "🔊 Read question aloud"}
@@ -163,6 +175,17 @@ export function InterviewRoom() {
       </div>
 
       <aside className="space-y-4">
+        {!done && (
+          <WebcamPanel
+            videoRef={attention.videoRef}
+            status={attention.status}
+            error={attention.error}
+            live={attention.live}
+            model={attention.model}
+            enabled={camOn}
+            onToggle={() => setCamOn((v) => !v)}
+          />
+        )}
         <Card className="p-4">
           <Button
             variant={done ? "primary" : "secondary"}

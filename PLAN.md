@@ -74,3 +74,20 @@ Browser ──► frontend :3000 ──(fetch, JWT)──► api :4000 ──(HT
   Evaluator sees the metrics).
 - frontend already renders `NlpMetrics`; tune keyword-coverage threshold.
 - tests: pytest for each metric on hand-made transcripts.
+
+## Phase 5 — vision: landmarks → PyTorch attention classifier
+- Contract: 15 MediaPipe FaceMesh key points (nose, chin, forehead, eye corners/lids, irises,
+  cheeks) × (x, y, z) = 45 numbers per frame, captured in the browser every 500 ms. Same index
+  list in `ai/app/vision/features.py` and `frontend/src/lib/landmarks.ts` (a test parses the TS
+  file to prevent train/serve skew).
+- ai `app/vision/`: features (normalize by nose + inter-ocular distance; add yaw/pitch/iris-ratio
+  features → 51), `AttentionMLP` (51→32→16→1), predictor that loads `models/attention_mlp.pt`
+  with saved standardization stats, heuristic fallback until trained. `POST /vision/predict`.
+- ml `ml/vision/`: `record_landmarks.py` (OpenCV + MediaPipe, keys label frames), browser
+  `/vision-lab` page (same extractor as production) exporting CSV, `train_attention.py`
+  (group split by recording, early stopping, metrics JSON), `synthetic.py` for tests only.
+  Data guide in `ml/vision/README.md`.
+- api: `POST /sessions/:id/attention` proxy (zod-validated frames); answer route stores the
+  attention summary sent with the audio.
+- frontend: `useFaceLandmarks` hook (@mediapipe/tasks-vision), webcam panel with live
+  attention, per-answer summary (`lib/attention.ts`, unit-tested with vitest).

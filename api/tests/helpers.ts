@@ -61,6 +61,11 @@ export function fakeAi(overrides: Partial<AiClient> = {}): AiClient {
       max_sentence_length: 12,
       lexical_diversity: 0.9,
     })),
+    predictAttention: vi.fn(async (frames: number[][]) => ({
+      probabilities: frames.map(() => 0.9),
+      attentive: frames.map(() => true),
+      model: "heuristic",
+    })),
     // Mimics the agent graph: fixed evaluation, next planned question, coach report on finish.
     step: vi.fn(async (req: StepRequest): Promise<StepResult> => {
       if (req.finish) {

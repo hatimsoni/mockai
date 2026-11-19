@@ -8,7 +8,7 @@ import logging
 from fastapi import Depends, FastAPI, Header, HTTPException
 
 from app.config import get_settings
-from app.routers import documents, interview, speech
+from app.routers import documents, interview, speech, vision
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 for noisy in ("httpx", "httpcore", "chromadb", "sentence_transformers"):
@@ -34,3 +34,4 @@ protected = [Depends(require_internal_key)]
 app.include_router(documents.router, dependencies=protected)
 app.include_router(speech.router, dependencies=protected)
 app.include_router(interview.router, dependencies=protected)
+app.include_router(vision.router, dependencies=protected)

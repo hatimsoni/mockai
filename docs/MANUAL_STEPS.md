@@ -21,3 +21,13 @@ docker compose -f infra/docker-compose.yml exec api npx prisma migrate deploy
 Open http://localhost:3000. MinIO console: http://localhost:9001 (minioadmin / minioadmin).
 
 > Low on RAM? Set `LLM_MODEL=qwen2.5:3b-instruct` in `infra/.env` and pull that instead (≈2 GB).
+
+## 3. Record webcam data and train the attention model (optional, ~30 min)
+Until you do this, attention uses a rule-based heuristic (works for obvious head turns / looking down).
+1. Start the app, open http://localhost:3000/vision-lab, click **Start camera**.
+2. Hold **A** while looking at the screen (talk, gesture, move a bit); hold **L** while looking away
+   (phone, notes, other monitor, window, ceiling). Aim for at least 500 frames of each.
+3. **Download CSV** into `ml/vision/data/`. Repeat on 3+ different sessions (lighting, glasses, distance).
+4. Train and install: `ai/.venv/Scripts/python ml/vision/train_attention.py`
+5. Restart the AI service (`docker compose restart ai`, or re-run uvicorn). `/vision/predict` now returns `"model": "mlp"`.
+Details and the reasoning behind the amounts: `ml/vision/README.md`.

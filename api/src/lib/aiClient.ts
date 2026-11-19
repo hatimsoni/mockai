@@ -105,6 +105,7 @@ export interface AiClient {
     jdText?: string;
   }): Promise<TranscribeResult>;
   analyze(args: { transcript: string; jdText: string; words: Word[]; durationSec: number | null }): Promise<NlpMetrics>;
+  predictAttention(frames: number[][]): Promise<{ probabilities: number[]; attentive: boolean[]; model: string }>;
   /** One run of the LangGraph agent graph (evaluate -> next question, or -> report). */
   step(req: StepRequest): Promise<StepResult>;
 }
@@ -172,6 +173,9 @@ export function httpAiClient(baseUrl = config.aiServiceUrl): AiClient {
     },
     analyze({ transcript, jdText, words, durationSec }) {
       return postJson("/nlp/analyze", { transcript, jd_text: jdText, words, duration_sec: durationSec });
+    },
+    predictAttention(frames) {
+      return postJson("/vision/predict", { frames });
     },
     step(req) {
       return postJson("/interview/step", req);
