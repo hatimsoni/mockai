@@ -3,9 +3,16 @@
 Run: uvicorn app.main:app --reload --port 8000
 Docs: http://localhost:8000/docs (auto-generated OpenAPI UI)
 """
+import logging
+
 from fastapi import Depends, FastAPI, Header, HTTPException
 
 from app.config import get_settings
+from app.routers import documents
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+for noisy in ("httpx", "httpcore", "chromadb", "sentence_transformers"):
+    logging.getLogger(noisy).setLevel(logging.WARNING)
 
 app = FastAPI(title="AI Mock Interview Coach — AI service", version="0.1.0")
 
@@ -24,3 +31,4 @@ def health() -> dict:
 
 
 protected = [Depends(require_internal_key)]
+app.include_router(documents.router, dependencies=protected)

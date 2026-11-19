@@ -25,6 +25,7 @@ CREATE TABLE "InterviewSession" (
     "resumeKey" TEXT,
     "status" "SessionStatus" NOT NULL DEFAULT 'IN_PROGRESS',
     "maxQuestions" INTEGER NOT NULL,
+    "plan" JSONB,
     "report" JSONB,
     "overallScore" DOUBLE PRECISION,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

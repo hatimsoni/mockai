@@ -38,6 +38,7 @@ model InterviewSession {
   resumeKey      String? // object key in MinIO/S3
   status         SessionStatus @default(IN_PROGRESS)
   maxQuestions   Int
+  plan           Json? // RAG question plan (main questions, with source chunks)
   report         Json? // Coach agent output
   overallScore   Float?
   createdAt      DateTime      @default(now())

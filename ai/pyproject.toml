@@ -15,4 +15,4 @@ extend-exclude = [".venv", "data"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
-ignore = ["B008"]  # FastAPI uses function calls in defaults (Depends, File)
+ignore = ["B008", "E501"]  # B008: FastAPI Depends/File defaults; E501: long prompt strings
