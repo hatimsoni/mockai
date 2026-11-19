@@ -18,6 +18,7 @@ describe("interview loop", () => {
     expect(a1.body.next).toMatchObject({ index: 1, question: "Question number 2?", kind: "main" });
 
     expect(a1.body.turn.nlp).toMatchObject({ wpm: 130, filler_count: 1 });
+    expect(a1.body.turn.baselineScore).toBe(3.2);
     expect(vi.mocked(ai.transcribe).mock.calls[0][0].jdText).toContain("Backend engineer");
 
     // the agents received the transcript + NLP metrics we just stored (stateless AI service)
@@ -76,6 +77,15 @@ describe("interview loop", () => {
     expect(finishReq.finish).toBe(true);
     expect(finishReq.turns).toHaveLength(1);
     expect((await answer(app, token, session.id)).status).toBe(409);
+  });
+
+  it("works when the baseline model is unavailable", async () => {
+    const { app } = setup({ quality: vi.fn(async () => { throw new Error("down"); }) });
+    const token = await registerUser(app);
+    const { session } = (await createSession(app, token, 2)).body;
+    const res = await answer(app, token, session.id);
+    expect(res.status).toBe(200);
+    expect(res.body.turn.baselineScore).toBeNull();
   });
 
   it("rejects non-audio uploads", async () => {

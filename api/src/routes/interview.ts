@@ -93,8 +93,11 @@ export function interviewRouter(repo: Repo, ai: AiClient) {
     });
     const durationSec = asr.duration || body.durationSec || null;
 
-    // 2) speech analytics (NLTK): fillers, pace, pauses, JD keyword coverage
-    const nlp = await ai.analyze({ transcript: asr.text, jdText: session.jdText, words: asr.words, durationSec });
+    // 2) speech analytics (NLTK) + classic-ML baseline score, in parallel
+    const [nlp, baseline] = await Promise.all([
+      ai.analyze({ transcript: asr.text, jdText: session.jdText, words: asr.words, durationSec }),
+      ai.quality({ question: turn.question, answer: asr.text }).catch(() => null), // optional
+    ]);
 
     let answered = await repo.updateTurn(turn.id, {
       transcript: asr.text,
@@ -103,6 +106,7 @@ export function interviewRouter(repo: Repo, ai: AiClient) {
       audioKey: asr.audio_key,
       nlp,
       attention: body.attention,
+      baselineScore: baseline?.available ? baseline.score : null,
       answeredAt: new Date(),
     });
 

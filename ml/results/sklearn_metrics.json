@@ -1,0 +1,64 @@
+{
+  "results": {
+    "majority_class": {
+      "accuracy": 0.218,
+      "macro_f1": 0.072,
+      "mae": 1.842,
+      "within_1": 0.436,
+      "qwk": 0.0,
+      "n": 165
+    },
+    "length_only": {
+      "accuracy": 0.309,
+      "macro_f1": 0.287,
+      "mae": 1.03,
+      "within_1": 0.752,
+      "qwk": 0.531,
+      "n": 165
+    },
+    "tfidf_logreg": {
+      "accuracy": 0.394,
+      "macro_f1": 0.402,
+      "mae": 0.77,
+      "within_1": 0.867,
+      "qwk": 0.698,
+      "n": 165,
+      "best_params": {
+        "clf__C": "3.0",
+        "tfidf__ngram_range": "(1, 2)"
+      }
+    }
+  },
+  "top_words": {
+    "1": [
+      "you know",
+      "know",
+      "say",
+      "here",
+      "not really",
+      "you",
+      "best",
+      "just",
+      "do my",
+      "to say",
+      "ve done",
+      "t think"
+    ],
+    "5": [
+      "it as",
+      "from",
+      "team i",
+      "as a",
+      "as",
+      "result",
+      "our",
+      "3",
+      "and",
+      "scale and",
+      "and the",
+      "at"
+    ]
+  },
+  "train_rows": 932,
+  "test_rows": 165
+}

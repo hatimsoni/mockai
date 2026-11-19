@@ -1,0 +1,14 @@
+{
+  "results": {
+    "keras_embedding_mlp": {
+      "accuracy": 0.503,
+      "macro_f1": 0.504,
+      "mae": 0.636,
+      "within_1": 0.885,
+      "qwk": 0.749,
+      "n": 165,
+      "epochs": 20,
+      "params": 644485
+    }
+  }
+}

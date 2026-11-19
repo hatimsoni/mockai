@@ -61,3 +61,14 @@ One line each: what, and why.
 - **Batch 4 frames per request (every ~2 s)** — live feedback without flooding the API.
 - **Attention summary computed client-side per answer, validated by zod in the API** — simple; only aggregates stored.
 - **MediaPipe WASM + model loaded from public CDNs (jsdelivr, Google storage)** — free; offline use would need copying them into `frontend/public/`.
+
+## Phase 6 — classic ML
+- **Template seed dataset with rubric labels + noise** — everything (training, CI, LoRA notebook) runs offline today; clearly labelled synthetic and optimistic.
+- **LLM-generated answers are labelled by a human before training** — the LLM's intended score is a hint, not ground truth.
+- **Input = question + " [SEP] " + answer, built by `app.quality.model_input`** — relevance depends on the question; one function prevents skew.
+- **Metrics: accuracy, macro-F1, MAE, within-1, QWK** — scores are ordinal; QWK is the essay-scoring standard.
+- **Majority + length-only baselines reported** — length alone reaches QWK 0.53; shows what the models add.
+- **Serve the scikit-learn pipeline, not Keras** — tiny, fast, no TensorFlow in the AI image; Keras is a comparison only.
+- **scikit-learn pinned to 1.9.\*** — pickled pipelines are version-sensitive.
+- **Baseline used as the Evaluator's fallback** — better than length-only scoring when the LLM is down.
+- **`tensorflow-cpu` only in `ml/requirements.txt`** — keeps the AI image ~500 MB lighter.

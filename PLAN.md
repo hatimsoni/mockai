@@ -91,3 +91,19 @@ Browser ──► frontend :3000 ──(fetch, JWT)──► api :4000 ──(HT
   attention summary sent with the audio.
 - frontend: `useFaceLandmarks` hook (@mediapipe/tasks-vision), webcam panel with live
   attention, per-answer summary (`lib/attention.ts`, unit-tested with vitest).
+
+## Phase 6 — classic ML baselines (scikit-learn + Keras) + dataset builder
+- Dataset schema (`ml/data/*.csv`): id, question, answer, label (1-5), source, intended_score.
+- `ml/dataset/build_seed.py`: template generator (no LLM) — answers composed from rubric
+  components (relevance, specifics/metrics, STAR parts, vagueness/fillers) → rubric label + noise.
+  Lets everything run offline/CI; honestly flagged as synthetic.
+- `ml/dataset/generate_llm.py`: local LLM writes answers targeting each score 1-5 per question
+  (intended_score); `ml/dataset/label.py`: CLI for manual labels; `ml/dataset/split.py`: merge +
+  stratified train/val/test with fixed seed (the same test set is reused by phase 7).
+- `ml/classic/train_sklearn.py`: majority + length-only baselines, TF-IDF(1-2 grams) +
+  LogisticRegression with GridSearchCV; metrics: accuracy, macro-F1, MAE, QWK, within-1; exports
+  `ai/models/quality_baseline.joblib`. `ml/classic/train_keras.py`: TextVectorization → Embedding →
+  pooling → Dense softmax, early stopping. `ml/results/compare.py` → `RESULTS.md` table.
+- ai: `/ml/quality` serves the sklearn pipeline (expected score from class probabilities);
+  evaluator heuristic fallback uses it when the LLM is down. API stores `turn.baselineScore`.
+- tests: pytest for seed generator determinism, metrics helpers, `/ml/quality` with a tiny model.

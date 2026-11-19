@@ -24,12 +24,18 @@
   features + yaw/pitch/iris ratios; training with group split + early stopping (synthetic pipeline
   check: acc 0.99 — synthetic only, not installed); recorder script + `/vision-lab` page;
   per-answer attention summary stored on the turn.
+- **Phase 6 — classic ML**: template seed dataset (1,200 rows, rubric labels + noise) → stratified
+  splits in `ml/data/`; LLM answer generator + human labelling CLI; sklearn (majority, length-only,
+  TF-IDF+LogReg with GridSearchCV) and Keras embedding model; `ml/results/RESULTS.md` (test QWK:
+  length 0.53, TF-IDF 0.70, Keras 0.75 — synthetic data); `/ml/quality` serves the sklearn
+  pipeline; API stores `turn.baselineScore`; Evaluator fallback uses it.
 
-Tests now: ai 44 (pytest), api 18 (vitest), frontend 5 (vitest).
+Tests now: ai 47 + ml 5 (pytest), api 19 (vitest), frontend 5 (vitest).
 
 ## Pending
-- Phases 6–9.
+- Phases 7–9.
 - Manual: record webcam data + train attention model (`docs/MANUAL_STEPS.md` §3).
+- Manual: generate + label real answers, retrain (`docs/MANUAL_STEPS.md` §4).
 
 ## Known issues
 - Docker, Ollama, kind not installed on build machine: compose/images not run locally
@@ -38,7 +44,6 @@ Tests now: ai 44 (pytest), api 18 (vitest), frontend 5 (vitest).
 - MediaPipe WASM/model load from public CDNs (needs internet in the browser).
 
 ## Next step
-Phase 6: classic ML — `ml/dataset/` (synthetic answer generator via local LLM + template seed
-generator + labelling CLI), `ml/classic/train_sklearn.py` (TF-IDF + LogisticRegression) and
-`train_keras.py`, metrics table in `ml/results/`; serve baseline via AI `/ml/quality`; API stores
-`turn.baselineScore`.
+Phase 7: LoRA notebook `ml/finetune/lora_qwen_scoring.ipynb` (Colab T4, Qwen2.5-0.5B-Instruct +
+PEFT, same `ml/data/test.csv`), compare base zero-shot vs LoRA vs sklearn, export
+`lora_metrics.json`; merge + GGUF/Ollama Modelfile + optional transformers loader in AI service.

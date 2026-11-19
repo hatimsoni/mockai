@@ -14,6 +14,7 @@ import logging
 from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
 
+from app import quality
 from app.agents.state import InterviewState, TurnIn
 from app.llm import invoke_json
 
@@ -91,9 +92,15 @@ def _speech_notes(turn: TurnIn) -> str:
 
 
 def heuristic_evaluation(turn: TurnIn, reason: str) -> Evaluation:
-    """Last-resort scoring when the LLM is unavailable: based on answer length only."""
+    """Last-resort scoring when the LLM is unavailable.
+
+    Uses the trained scikit-learn baseline if it exists (phase 6), otherwise answer length.
+    """
     words = len((turn.transcript or "").split())
     base = 1 if words < 15 else 2 if words < 50 else 3
+    baseline = quality.predict(turn.question, turn.transcript or "") if words >= 3 else None
+    if baseline:
+        base = int(round(baseline["score"]))
     e = EvaluationLLM(
         relevance=base,
         depth=base,

@@ -31,3 +31,19 @@ Until you do this, attention uses a rule-based heuristic (works for obvious head
 4. Train and install: `ai/.venv/Scripts/python ml/vision/train_attention.py`
 5. Restart the AI service (`docker compose restart ai`, or re-run uvicorn). `/vision/predict` now returns `"model": "mlp"`.
 Details and the reasoning behind the amounts: `ml/vision/README.md`.
+
+## 4. Build the real (human-labelled) answer dataset (optional, ~2–3 h, mostly waiting)
+The committed models are trained on a template-generated seed set (synthetic). For honest results:
+1. Make sure Ollama runs locally with the model pulled (`ollama pull qwen2.5:7b-instruct`).
+2. Generate answers (resumable; ~1–1.5 h on CPU for 160 answers):
+   `ai/.venv/Scripts/python ml/dataset/generate_llm.py --per-score 2`
+3. Label them yourself (ENTER accepts the LLM's intended score; stop/resume any time):
+   `ai/.venv/Scripts/python ml/dataset/label.py`
+4. Re-split and retrain everything, then rebuild the table:
+   ```bash
+   ai/.venv/Scripts/python ml/dataset/split.py
+   ai/.venv/Scripts/python ml/classic/train_sklearn.py
+   ai/.venv/Scripts/python ml/classic/train_keras.py      # needs: pip install -r ml/requirements.txt
+   ai/.venv/Scripts/python ml/results/compare.py
+   ```
+5. Restart the AI service so it loads the new `ai/models/quality_baseline.joblib`.
