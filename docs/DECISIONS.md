@@ -41,3 +41,11 @@ One line each: what, and why.
 - **Coach gets computed numbers and only writes prose** — no hallucinated statistics.
 - **Fallbacks everywhere (heuristic evaluation, template follow-up, evaluator-highlight report), flagged in the data** — the interview never dead-ends if Ollama is slow/down; UI marks approximate scores.
 - **If the agent step fails, the transcript is rolled back** — the user can just answer again.
+
+## Phase 4 — NLP
+- **Rule-based fillers with a comma "pause" rule for ambiguous words (like/so/actually)** — transparent and testable baseline; Whisper renders short pauses as commas.
+- **WPM over the speaking span from word timestamps** — doesn't penalise thinking time before the first word.
+- **JD keywords = POS-tagged nouns + tech tokens, top 15 by frequency; coverage via Porter stems** — no extra model; `node.js` also matches spoken "Node".
+- **Per-answer coverage threshold 20% for "good"** — one answer can't cover a whole JD.
+- **Same keyword extractor biases Whisper** — `/asr/transcribe` takes `jd_text`.
+- **Removed apt ffmpeg from the AI image** — PyAV wheels bundle FFmpeg.

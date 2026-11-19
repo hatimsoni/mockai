@@ -17,9 +17,13 @@ describe("interview loop", () => {
     expect(a1.body.turn.evaluation.improvements).toEqual(["add a metric"]);
     expect(a1.body.next).toMatchObject({ index: 1, question: "Question number 2?", kind: "main" });
 
-    // the AI received the transcript we just stored (stateless AI service)
+    expect(a1.body.turn.nlp).toMatchObject({ wpm: 130, filler_count: 1 });
+    expect(vi.mocked(ai.transcribe).mock.calls[0][0].jdText).toContain("Backend engineer");
+
+    // the agents received the transcript + NLP metrics we just stored (stateless AI service)
     const req = vi.mocked(ai.step).mock.calls[0][0];
     expect(req.turns.at(-1)?.transcript).toContain("question 1");
+    expect(req.turns.at(-1)?.nlp).toMatchObject({ wpm: 130 });
     expect(req.plan).toHaveLength(2);
 
     const a2 = await answer(app, token, session.id);

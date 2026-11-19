@@ -73,6 +73,22 @@ export type StepResult = {
   done: boolean;
   report: Report | null;
 };
+export type NlpMetrics = {
+  word_count: number;
+  speaking_seconds: number | null;
+  wpm: number | null;
+  filler_count: number;
+  fillers_per_min: number | null;
+  fillers: Record<string, number>;
+  long_pauses: number;
+  keyword_coverage: number;
+  keywords_hit: string[];
+  keywords_missed: string[];
+  sentence_count: number;
+  avg_sentence_length: number;
+  max_sentence_length: number;
+  lexical_diversity: number;
+};
 export type UploadedFile = { buffer: Buffer; filename: string; mimetype: string };
 
 export interface AiClient {
@@ -86,8 +102,9 @@ export interface AiClient {
     sessionId: string;
     turnIndex: number;
     file: UploadedFile;
-    keywords?: string[];
+    jdText?: string;
   }): Promise<TranscribeResult>;
+  analyze(args: { transcript: string; jdText: string; words: Word[]; durationSec: number | null }): Promise<NlpMetrics>;
   /** One run of the LangGraph agent graph (evaluate -> next question, or -> report). */
   step(req: StepRequest): Promise<StepResult>;
 }
@@ -145,13 +162,16 @@ export function httpAiClient(baseUrl = config.aiServiceUrl): AiClient {
         num_questions: numQuestions,
       });
     },
-    transcribe({ sessionId, turnIndex, file, keywords = [] }) {
+    transcribe({ sessionId, turnIndex, file, jdText = "" }) {
       const form = new FormData();
       form.set("session_id", sessionId);
       form.set("turn_index", String(turnIndex));
-      form.set("keywords", JSON.stringify(keywords));
+      form.set("jd_text", jdText); // AI extracts JD keywords to bias Whisper's vocabulary
       form.set("audio", toBlob(file), file.filename);
       return call("/asr/transcribe", { method: "POST", body: form });
+    },
+    analyze({ transcript, jdText, words, durationSec }) {
+      return postJson("/nlp/analyze", { transcript, jd_text: jdText, words, duration_sec: durationSec });
     },
     step(req) {
       return postJson("/interview/step", req);

@@ -45,6 +45,22 @@ export function fakeAi(overrides: Partial<AiClient> = {}): AiClient {
       words: [{ word: "Um,", start: 0, end: 0.3, probability: 0.9 }],
       audio_key: `audio/x/${turnIndex}.webm`,
     })),
+    analyze: vi.fn(async ({ transcript }) => ({
+      word_count: transcript.split(" ").length,
+      speaking_seconds: 40,
+      wpm: 130,
+      filler_count: 1,
+      fillers_per_min: 1.5,
+      fillers: { um: 1 },
+      long_pauses: 0,
+      keyword_coverage: 0.25,
+      keywords_hit: ["apis"],
+      keywords_missed: ["docker"],
+      sentence_count: 1,
+      avg_sentence_length: 12,
+      max_sentence_length: 12,
+      lexical_diversity: 0.9,
+    })),
     // Mimics the agent graph: fixed evaluation, next planned question, coach report on finish.
     step: vi.fn(async (req: StepRequest): Promise<StepResult> => {
       if (req.finish) {

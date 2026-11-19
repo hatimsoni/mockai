@@ -63,3 +63,14 @@ Browser ──► frontend :3000 ──(fetch, JWT)──► api :4000 ──(HT
 - frontend: report page (overall score, category bars, per-question feedback, coach advice).
 - tests: graph routing, evaluator retry/fallback, follow-up limits, coach aggregation (fake LLM);
   vitest for follow-up turn creation + report saving.
+
+## Phase 4 — NLP speech analysis (NLTK)
+- ai `app/nlp.py`: tokenize (punkt), filler detection (single + multi-word, context rule for
+  "like"/"so"), WPM from word timestamps (speaking span, not recording length), long pauses
+  (> 2 s gaps), JD keyword extraction (POS-tag nouns + tech tokens, stopwords removed, ranked by
+  frequency) and coverage with Porter stemming, sentence-length stats, lexical diversity.
+- `POST /nlp/analyze`; `/asr/transcribe` accepts `jd_text` and biases Whisper with JD keywords.
+- api: answer route calls analyze after ASR, stores `turn.nlp` before the agents run (the
+  Evaluator sees the metrics).
+- frontend already renders `NlpMetrics`; tune keyword-coverage threshold.
+- tests: pytest for each metric on hand-made transcripts.

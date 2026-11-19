@@ -97,7 +97,7 @@ export function TurnFeedback({ turn }: { turn: Turn }) {
               {n.filler_count} filler words{Object.keys(n.fillers).length > 0 && ` (${Object.entries(n.fillers).map(([w, c]) => `${w}×${c}`).join(", ")})`}
             </Badge>
           )}
-          {n && <Badge tone={n.keyword_coverage >= 0.3 ? "green" : "amber"}>JD keywords {Math.round(n.keyword_coverage * 100)}%</Badge>}
+          {n && <Badge tone={n.keyword_coverage >= 0.2 ? "green" : "amber"}>JD keywords {Math.round(n.keyword_coverage * 100)}%</Badge>}
           {n && n.long_pauses > 0 && <Badge>{n.long_pauses} long pauses</Badge>}
           {a && a.samples > 0 && (
             <Badge tone={a.attentive_ratio >= 0.7 ? "green" : "amber"}>eye contact {Math.round(a.attentive_ratio * 100)}%</Badge>

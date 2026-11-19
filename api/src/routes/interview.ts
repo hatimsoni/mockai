@@ -62,16 +62,23 @@ export function interviewRouter(repo: Repo, ai: AiClient) {
       sessionId: session.id,
       turnIndex: turn.index,
       file: { buffer: req.file.buffer, filename: req.file.originalname || "answer.webm", mimetype: req.file.mimetype },
+      jdText: session.jdText,
     });
+    const durationSec = asr.duration || body.durationSec || null;
+
+    // 2) speech analytics (NLTK): fillers, pace, pauses, JD keyword coverage
+    const nlp = await ai.analyze({ transcript: asr.text, jdText: session.jdText, words: asr.words, durationSec });
+
     let answered = await repo.updateTurn(turn.id, {
       transcript: asr.text,
       words: asr.words,
-      durationSec: asr.duration || body.durationSec || null,
+      durationSec,
       audioKey: asr.audio_key,
+      nlp,
       answeredAt: new Date(),
     });
 
-    // 2) agents: Evaluator scores the answer, Interviewer picks follow-up / next question
+    // 3) agents: Evaluator scores the answer, Interviewer picks follow-up / next question
     const turns = session.turns.map((t) => (t.id === answered.id ? answered : t));
     let step;
     try {
@@ -83,7 +90,7 @@ export function interviewRouter(repo: Repo, ai: AiClient) {
       });
     } catch (err) {
       // undo so the user can simply answer again
-      await repo.updateTurn(turn.id, { transcript: null, words: null, answeredAt: null });
+      await repo.updateTurn(turn.id, { transcript: null, words: null, nlp: null, answeredAt: null });
       throw err;
     }
 

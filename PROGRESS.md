@@ -30,12 +30,16 @@
   follow-up policy (budget 2, RAG-grounded); Coach report with code-computed aggregates; API
   answer/finish routes drive the graph (rollback on failure); report page.
   Tests: ai 27, api 14.
+- **Phase 4 — NLP**: `ai/app/nlp.py` (NLTK) fillers (pause rule for "like"/"so"), WPM over
+  speaking span, long pauses, JD keyword extraction (POS + stopwords) + stemmed coverage,
+  sentence stats, lexical diversity; `/nlp/analyze`; JD keywords bias Whisper; API stores
+  `turn.nlp` before agents run. Tests: ai 36, api 14.
 
 
 
 ## Pending
 
-- Phases 4–9.
+- Phases 5–9.
 
 
 
@@ -50,8 +54,7 @@
 
 
 ## Next step
-
-Phase 4: NLP speech analysis — `ai/app/nlp.py` (NLTK): fillers, WPM, pauses, JD keyword
-coverage, sentence stats; `/nlp/analyze`; API stores `turn.nlp` before calling the agents.
-Output shape must match `NlpMetrics` in `frontend/src/lib/types.ts`.
-
+Phase 5: vision — frontend MediaPipe FaceLandmarker every ~500 ms → 15 key landmarks (45
+numbers) → API `/sessions/:id/attention` proxy → AI `/vision/predict` (PyTorch MLP, heuristic
+fallback until trained); `ml/vision/` record/label/train scripts; attention summary saved per
+answer (shape: `Attention` in `frontend/src/lib/types.ts`).
